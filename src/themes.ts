@@ -7,12 +7,13 @@ export interface Theme {
   shadowColor: string;
   questionText: string;
   emojis: string;
+  backdropFilter?: string; // Optional backdropFilter property
 }
 
 export const THEMES: Record<string, Theme> = {
   pastelGoth: {
     name: 'Pastel Goth',
-    background: 'linear-gradient(135deg, #ffb6d5 0%, #ff69b4 100%)',
+    background: 'linear-gradient(135deg, #ffb6d5 0%, #ff69b4 50%, #b19cd9 75%, #add8e6 100%)', // Added light purple and light blue
     overlay: 'rgba(255, 182, 213, 0.85)',
     textColor: '#7a004f',
     borderColor: '#ff69b4',
@@ -23,12 +24,13 @@ export const THEMES: Record<string, Theme> = {
   frutigerAero: {
     name: 'Frutiger Aero',
     background: 'linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%)',
-    overlay: 'rgba(168, 230, 207, 0.85)',
+    overlay: 'rgba(168, 230, 207, 0.3)', // Semi-transparent background
     textColor: '#05668d',
     borderColor: '#02c39a',
     shadowColor: '#a8e6cf44',
     questionText: "What's on your mind? 🌈",
     emojis: "🌈✨☁️",
+    backdropFilter: 'blur(10px)', // Add blur effect for glassmorphism
   },
   brutalist: {
     name: 'Brutalist',
