@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { THEMES, ThemeKey } from '../themes';
+import { OllamaClient } from '../clients/LLMClient';
+
+const ollamaClient = new OllamaClient();
 
 type DiaryProps = {
   theme: typeof THEMES[ThemeKey];
@@ -10,6 +13,7 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
   const [text, setText] = useState('');
   const [diaryEntry, setDiaryEntry] = useState<string | null>(null);
   const [typedDiaryEntry, setTypedDiaryEntry] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     let typedEntry = `  Dear Diary,\n ${diaryEntry}`;
@@ -31,13 +35,25 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
     }
   }, [diaryEntry]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (text.trim()) {
         setTypedDiaryEntry(''); // Clear the typed entry for the new entry
         setDiaryEntry(null);
-        setDiaryEntry(`${text.trim()}`); // Set the new diary entry
+        setIsLoading(true); // Show loading indicator
+
+        const prompt = `Translate the emotions conveyed in the following text into music genres: "${text.trim()}". Return only a plain list of music genres, separated by commas, with no additional text.`;
+        try {
+          const genres = await ollamaClient.generateResponse(prompt);
+          
+          const formattedGenres = genres.split(',').map(genre => `- ${genre.trim()}`).join('\n');
+          setDiaryEntry(`${text.trim()}\n\nYour emotions translate to these music genres:\n${formattedGenres}`); // Append formatted genres with flavor text
+        } catch (error) {
+          console.error('Error generating music genres:', error);
+        } finally {
+          setIsLoading(false); // Hide loading indicator
+        }
         setText(''); // Clear the input text
       }
     }
@@ -120,6 +136,16 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
           marginBottom: 56,
         }}>
           {typedDiaryEntry}
+        </div>
+      )}
+      {isLoading && (
+        <div style={{
+          marginBottom: 16,
+          fontSize: 18,
+          color: theme.textColor,
+          fontStyle: 'italic',
+        }}>
+          Generating music genres...
         </div>
       )}
       <div style={{

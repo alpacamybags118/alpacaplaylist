@@ -4,7 +4,12 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
-    }
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": "true",
+      "moby": "true"
+    },
   },
   "postCreateCommand": "npm install",
   "customizations": {
@@ -14,8 +19,10 @@
       },
       "extensions": [
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-containers"
       ]
     }
-  }
+  },
+  "forwardPorts": [3000, 11434]
 }
