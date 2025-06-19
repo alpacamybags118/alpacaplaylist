@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { THEMES, ThemeKey } from '../themes';
 import { OllamaClient } from '../clients/LLMClient';
+import { SpotifyClient } from '../clients/SpotifyClient';
 
 const ollamaClient = new OllamaClient();
+const spotifyClient = new SpotifyClient(
+  process.env.REACT_APP_SPOTIFY_CLIENT_ID || '',
+  process.env.REACT_APP_SPOTIFY_CLIENT_SECRET || ''
+);
 
 type DiaryProps = {
   theme: typeof THEMES[ThemeKey];
@@ -17,7 +22,7 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
 
   useEffect(() => {
     let typedEntry = `  Dear Diary,\n ${diaryEntry}`;
-    if (typedEntry) {
+    if (typedEntry && diaryEntry) { // Only proceed if diaryEntry exists
       let index = 0;
       setTypedDiaryEntry(''); // Reset the typed entry
       const interval = setInterval(() => {
@@ -40,20 +45,41 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
       e.preventDefault();
       if (text.trim()) {
         setTypedDiaryEntry(''); // Clear the typed entry for the new entry
-        setDiaryEntry(null);
         setIsLoading(true); // Show loading indicator
 
         const prompt = `Translate the emotions conveyed in the following text into music genres: "${text.trim()}". Return only a plain list of music genres, separated by commas, with no additional text.`;
         try {
           const genres = await ollamaClient.generateResponse(prompt);
+          console.log('Generated Music Genres:', genres);
+
+          const formattedGenres = genres.split(',').map(genre => genre.trim());
           
-          const formattedGenres = genres.split(',').map(genre => `- ${genre.trim()}`).join('\n');
-          setDiaryEntry(`${text.trim()}\n\nYour emotions translate to these music genres:\n${formattedGenres}`); // Append formatted genres with flavor text
+          // Try to fetch songs if Spotify credentials are valid, otherwise skip
+          let songsList = '';
+          try {
+            const songs = await spotifyClient.searchTracksByGenre(formattedGenres[0]);
+            console.log('Fetched Songs:', songs);
+            if (songs && songs.length > 0) {
+              songsList = '\n\nHere are some songs for you:\n' + 
+                songs.slice(0, 5).map(song => 
+                  `- ${song.name} by ${song.artists.map(artist => artist.name).join(', ')}`
+                ).join('\n');
+            }
+          } catch (spotifyError) {
+            console.error('Spotify API error:', spotifyError);
+            // Continue without Spotify integration if it fails
+          }
+
+          const entry = `${text.trim()}\n\nYour emotions translate to these music genres:\n${formattedGenres.map(genre => `- ${genre}`).join('\n')}${songsList}`;
+          setDiaryEntry(entry);
         } catch (error) {
-          console.error('Error generating music genres:', error);
+          console.error('Error:', error);
+          // Set a basic diary entry even if LLM fails
+          setDiaryEntry(text.trim());
         } finally {
           setIsLoading(false); // Hide loading indicator
         }
+
         setText(''); // Clear the input text
       }
     }
@@ -61,7 +87,7 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
 
   return (
     <div style={{
-      maxWidth: 600,
+      maxWidth: 700, // Increased from 600
       width: '100%',
       padding: 32,
       textAlign: 'center',
@@ -72,7 +98,10 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
       position: 'relative',
       fontFamily: '"Caveat", "Comic Neue", "Segoe UI", cursive, sans-serif',
       color: theme.textColor,
-      overflow: 'hidden',
+      overflow: 'visible',
+      maxHeight: '85vh', // Increased from 80vh
+      display: 'flex',
+      flexDirection: 'column',
       zIndex: 1,
     }}>
       <h2 style={{
@@ -90,7 +119,7 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
         value={text}
         onChange={e => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        rows={8}
+        rows={10} // Increased from 8
         style={{
           width: '100%',
           minWidth: 0,
@@ -130,7 +159,9 @@ const Diary: React.FC<DiaryProps> = ({ theme, question }) => {
           whiteSpace: 'pre-line',
           boxShadow: `0 2px 8px 0 ${theme.shadowColor}`,
           border: `1.5px solid ${theme.borderColor}`,
-          maxWidth: 520,
+          maxWidth: 620, // Increased from 520
+          maxHeight: '50vh', // Increased from 40vh
+          overflowY: 'auto',
           marginLeft: 'auto',
           marginRight: 'auto',
           marginBottom: 56,

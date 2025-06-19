@@ -30,18 +30,15 @@ const App: React.FC = () => {
       minHeight: '100dvh',
       minWidth: '100vw',
       width: '100vw',
-      height: '100dvh',
       background: theme.background,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      overflow: 'hidden',
       margin: 0,
-      padding: 0,
+      padding: 24, // Add some padding to ensure space for scrolling
       boxSizing: 'border-box',
-      position: 'fixed',
-      top: 0,
-      left: 0,
+      position: 'relative', // Changed from fixed to relative
+      overflowY: 'auto', // Allow vertical scrolling
       zIndex: 0,
     }}>
       <ThemeSelector currentThemeKey={currentThemeKey} onThemeChange={handleThemeChange} />

@@ -5,7 +5,7 @@ export interface LLMClient {
 export class OllamaClient implements LLMClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = 'http://localhost:52329') {
+  constructor(baseUrl: string = process.env.REACT_APP_OLLAMA_API_URL || 'http://localhost:11434') {
     this.baseUrl = baseUrl;
   }
 
